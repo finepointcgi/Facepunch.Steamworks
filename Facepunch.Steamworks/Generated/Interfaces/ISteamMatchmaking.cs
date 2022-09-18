@@ -177,6 +177,7 @@ namespace Steamworks
 		internal CallResult<LobbyEnter_t> JoinLobby( SteamId steamIDLobby )
 		{
 			var returnValue = _JoinLobby( Self, steamIDLobby );
+			
 			return new CallResult<LobbyEnter_t>( returnValue, IsServer );
 		}
 		

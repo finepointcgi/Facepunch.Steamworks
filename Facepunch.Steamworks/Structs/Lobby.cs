@@ -25,6 +25,7 @@ namespace Steamworks.Data
 		public async Task<RoomEnter> Join()
 		{
 			var result = await SteamMatchmaking.Internal.JoinLobby( Id );
+			Console.WriteLine( "lobby join result: " + result );
 			if ( !result.HasValue ) return RoomEnter.Error;
 
 			return (RoomEnter) result.Value.EChatRoomEnterResponse;
