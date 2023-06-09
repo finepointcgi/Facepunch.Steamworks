@@ -156,6 +156,10 @@ namespace Steamworks
 		InvalidSignature = 121,
 		ParseFailure = 122,
 		NoVerifiedPhone = 123,
+		InsufficientBattery = 124,
+		ChargerRequired = 125,
+		CachedCredentialInvalid = 126,
+		K_EResultPhoneNumberIsVOIP = 127,
 	}
 	
 	//
@@ -226,6 +230,7 @@ namespace Steamworks
 		AuthTicketInvalidAlreadyUsed = 7,
 		AuthTicketInvalid = 8,
 		PublisherIssuedBan = 9,
+		AuthTicketNetworkIdentityFailure = 10,
 	}
 	
 	//
@@ -311,6 +316,7 @@ namespace Steamworks
 	//
 	public enum NotificationPosition : int
 	{
+		Invalid = -1,
 		TopLeft = 0,
 		TopRight = 1,
 		BottomLeft = 2,
@@ -542,6 +548,37 @@ namespace Steamworks
 	{
 		Default = 0,
 		Modal = 1,
+	}
+	
+	//
+	// ECommunityProfileItemType
+	//
+	internal enum CommunityProfileItemType : int
+	{
+		AnimatedAvatar = 0,
+		AvatarFrame = 1,
+		ProfileModifier = 2,
+		ProfileBackground = 3,
+		MiniProfileBackground = 4,
+	}
+	
+	//
+	// ECommunityProfileItemProperty
+	//
+	internal enum CommunityProfileItemProperty : int
+	{
+		ImageSmall = 0,
+		ImageLarge = 1,
+		InternalName = 2,
+		Title = 3,
+		Description = 4,
+		AppID = 5,
+		TypeID = 6,
+		Class = 7,
+		MovieWebM = 8,
+		MovieMP4 = 9,
+		MovieWebMSmall = 10,
+		MovieMP4Small = 11,
 	}
 	
 	//
@@ -863,18 +900,6 @@ namespace Steamworks
 	}
 	
 	//
-	// ERegisterActivationCodeResult
-	//
-	internal enum RegisterActivationCodeResult : int
-	{
-		ResultOK = 0,
-		ResultFail = 1,
-		ResultAlreadyRegistered = 2,
-		ResultTimeout = 3,
-		AlreadyOwned = 4,
-	}
-	
-	//
 	// EP2PSessionError
 	//
 	public enum P2PSessionError : int
@@ -965,6 +990,7 @@ namespace Steamworks
 		Code304NotModified = 304,
 		Code305UseProxy = 305,
 		Code307TemporaryRedirect = 307,
+		Code308PermanentRedirect = 308,
 		Code400BadRequest = 400,
 		Code401Unauthorized = 401,
 		Code402PaymentRequired = 402,
@@ -1272,10 +1298,10 @@ namespace Steamworks
 		Switch_LeftGrip_Upper = 245,
 		Switch_RightGrip_Lower = 246,
 		Switch_RightGrip_Upper = 247,
-		Switch_Reserved11 = 248,
-		Switch_Reserved12 = 249,
-		Switch_Reserved13 = 250,
-		Switch_Reserved14 = 251,
+		Switch_JoyConButton_N = 248,
+		Switch_JoyConButton_E = 249,
+		Switch_JoyConButton_S = 250,
+		Switch_JoyConButton_W = 251,
 		Switch_Reserved15 = 252,
 		Switch_Reserved16 = 253,
 		Switch_Reserved17 = 254,
@@ -1337,10 +1363,10 @@ namespace Steamworks
 		PS5_Gyro_Yaw = 310,
 		PS5_Gyro_Roll = 311,
 		PS5_DPad_Move = 312,
-		PS5_Reserved1 = 313,
-		PS5_Reserved2 = 314,
-		PS5_Reserved3 = 315,
-		PS5_Reserved4 = 316,
+		PS5_LeftGrip = 313,
+		PS5_RightGrip = 314,
+		PS5_LeftFn = 315,
+		PS5_RightFn = 316,
 		PS5_Reserved5 = 317,
 		PS5_Reserved6 = 318,
 		PS5_Reserved7 = 319,
@@ -1959,7 +1985,15 @@ namespace Steamworks
 		SteamDeck_Reserved18 = 375,
 		SteamDeck_Reserved19 = 376,
 		SteamDeck_Reserved20 = 377,
-		Count = 378,
+		Switch_JoyConButton_N = 378,
+		Switch_JoyConButton_E = 379,
+		Switch_JoyConButton_S = 380,
+		Switch_JoyConButton_W = 381,
+		PS5_LeftGrip = 382,
+		PS5_RightGrip = 383,
+		PS5_LeftFn = 384,
+		PS5_RightFn = 385,
+		Count = 386,
 		MaximumPossibleValue = 32767,
 	}
 	
@@ -2111,6 +2145,18 @@ namespace Steamworks
 	}
 	
 	//
+	// EUGCContentDescriptorID
+	//
+	internal enum UGCContentDescriptorID : int
+	{
+		NudityOrSexualContent = 1,
+		FrequentViolenceOrGore = 2,
+		AdultOnlySexualContent = 3,
+		GratuitousSexualContent = 4,
+		AnyMatureContent = 5,
+	}
+	
+	//
 	// ESteamItemFlags
 	//
 	internal enum SteamItemFlags : int
@@ -2139,7 +2185,8 @@ namespace Steamworks
 		Library = 11,
 		Test = 12,
 		SiteLicense = 13,
-		Max = 14,
+		KioskMode = 14,
+		Max = 15,
 	}
 	
 	//
@@ -2324,6 +2371,10 @@ namespace Steamworks
 		P2P_Transport_ICE_Enable = 104,
 		P2P_Transport_ICE_Penalty = 105,
 		P2P_Transport_SDR_Penalty = 106,
+		P2P_TURN_ServerList = 107,
+		P2P_TURN_UserList = 108,
+		P2P_TURN_PassList = 109,
+		P2P_Transport_ICE_Implementation = 110,
 		SDRClient_ConsecutitivePingTimeoutsFailInitial = 19,
 		SDRClient_ConsecutitivePingTimeoutsFail = 20,
 		SDRClient_MinPingsBeforePingAccurate = 21,

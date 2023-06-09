@@ -79,7 +79,7 @@ enum EResult
 	k_EResultAccountLogonDenied = 63,			// account login denied due to 2nd factor authentication failure
 	k_EResultCannotUseOldPassword = 64,			// The requested new password is not legal
 	k_EResultInvalidLoginAuthCode = 65,			// account login denied due to auth code invalid
-	k_EResultAccountLogonDeniedNoMail = 66,		// account login denied due to 2nd factor auth failure - and no mail has been sent
+	k_EResultAccountLogonDeniedNoMail = 66,		// account login denied due to 2nd factor auth failure - and no mail has been sent - partner site specific
 	k_EResultHardwareNotCapableOfIPT = 67,		// 
 	k_EResultIPTInitError = 68,					// 
 	k_EResultParentalControlRestricted = 69,	// operation failed due to parental control restrictions for current user
@@ -137,6 +137,10 @@ enum EResult
 	k_EResultInvalidSignature = 121,			// signature check did not match
 	k_EResultParseFailure = 122,				// Failed to parse input
 	k_EResultNoVerifiedPhone = 123,				// account does not have a verified phone number
+	k_EResultInsufficientBattery = 124,			// user device doesn't have enough battery charge currently to complete the action
+	k_EResultChargerRequired = 125,				// The operation requires a charger to be plugged in, which wasn't present
+	k_EResultCachedCredentialInvalid = 126,		// Cached credential was invalid - user must reauthenticate
+	K_EResultPhoneNumberIsVOIP = 127,			// The phone number provided is a Voice Over IP number
 };
 
 // Error codes for use with the voice functions
@@ -204,6 +208,7 @@ enum EAuthSessionResponse
 	k_EAuthSessionResponseAuthTicketInvalidAlreadyUsed = 7,	// This ticket has already been used, it is not valid.
 	k_EAuthSessionResponseAuthTicketInvalid = 8,			// This ticket is not from a user instance currently connected to steam.
 	k_EAuthSessionResponsePublisherIssuedBan = 9,			// The user is banned for this game. The ban came via the web api and not VAC
+	k_EAuthSessionResponseAuthTicketNetworkIdentityFailure = 10,	// The network identity in the ticket does not match the server authenticating the ticket
 };
 
 // results from UserHasLicenseForApp
@@ -306,6 +311,7 @@ enum EChatSteamIDInstanceFlags
 //-----------------------------------------------------------------------------
 enum ENotificationPosition
 {
+	k_EPositionInvalid = -1,
 	k_EPositionTopLeft = 0,
 	k_EPositionTopRight = 1,
 	k_EPositionBottomLeft = 2,
@@ -592,37 +598,6 @@ public:
 		m_steamid.m_comp.m_unAccountInstance = 0;
 	}
 
-
-#if defined( INCLUDED_STEAM2_USERID_STRUCTS ) 
-	//-----------------------------------------------------------------------------
-	// Purpose: Initializes a steam ID from a Steam2 ID structure
-	// Input:	pTSteamGlobalUserID -	Steam2 ID to convert
-	//			eUniverse -				universe this ID belongs to
-	//-----------------------------------------------------------------------------
-	void SetFromSteam2( TSteamGlobalUserID *pTSteamGlobalUserID, EUniverse eUniverse )
-	{
-		m_steamid.m_comp.m_unAccountID = pTSteamGlobalUserID->m_SteamLocalUserID.Split.Low32bits * 2 + 
-			pTSteamGlobalUserID->m_SteamLocalUserID.Split.High32bits;
-		m_steamid.m_comp.m_EUniverse = eUniverse;		// set the universe
-		m_steamid.m_comp.m_EAccountType = k_EAccountTypeIndividual; // Steam 2 accounts always map to account type of individual
-		m_steamid.m_comp.m_unAccountInstance = k_unSteamUserDefaultInstance; // Steam2 only knew one instance
-	}
-
-	//-----------------------------------------------------------------------------
-	// Purpose: Fills out a Steam2 ID structure
-	// Input:	pTSteamGlobalUserID -	Steam2 ID to write to
-	//-----------------------------------------------------------------------------
-	void ConvertToSteam2( TSteamGlobalUserID *pTSteamGlobalUserID ) const
-	{
-		// only individual accounts have any meaning in Steam 2, only they can be mapped
-		// Assert( m_steamid.m_comp.m_EAccountType == k_EAccountTypeIndividual );
-
-		pTSteamGlobalUserID->m_SteamInstanceID = 0;
-		pTSteamGlobalUserID->m_SteamLocalUserID.Split.High32bits = m_steamid.m_comp.m_unAccountID % 2;
-		pTSteamGlobalUserID->m_SteamLocalUserID.Split.Low32bits = m_steamid.m_comp.m_unAccountID / 2;
-	}
-#endif // defined( INCLUDED_STEAM_COMMON_STEAMCOMMON_H )
-
 	//-----------------------------------------------------------------------------
 	// Purpose: Converts steam ID to its 64-bit representation
 	// Output : 64-bit representation of a Steam ID
@@ -794,7 +769,6 @@ public:
     // and is preferred when the caller knows it's safe to be strict.
     // Returns whether the string parsed correctly.
 	bool SetFromStringStrict( const char *pchSteamID, EUniverse eDefaultUniverse );
-	bool SetFromSteam2String( const char *pchSteam2ID, EUniverse eUniverse );
 
 	inline bool operator==( const CSteamID &val ) const { return m_steamid.m_unAll64Bits == val.m_steamid.m_unAll64Bits; } 
 	inline bool operator!=( const CSteamID &val ) const { return !operator==( val ); }
@@ -863,6 +837,41 @@ inline bool CSteamID::IsValid() const
 	return true;
 }
 
+#if defined( INCLUDED_STEAM2_USERID_STRUCTS ) 
+
+//-----------------------------------------------------------------------------
+// Purpose: Initializes a steam ID from a Steam2 ID structure
+// Input:	pTSteamGlobalUserID -	Steam2 ID to convert
+//			eUniverse -				universe this ID belongs to
+//-----------------------------------------------------------------------------
+inline CSteamID SteamIDFromSteam2UserID( TSteamGlobalUserID *pTSteamGlobalUserID, EUniverse eUniverse )
+{
+	uint32 unAccountID = pTSteamGlobalUserID->m_SteamLocalUserID.Split.Low32bits * 2 + 
+		pTSteamGlobalUserID->m_SteamLocalUserID.Split.High32bits;
+
+	return CSteamID( unAccountID, k_unSteamUserDefaultInstance, eUniverse, k_EAccountTypeIndividual );
+}
+
+bool SteamIDFromSteam2String( const char *pchSteam2ID, EUniverse eUniverse, CSteamID *pSteamIDOut );
+
+//-----------------------------------------------------------------------------
+// Purpose: Fills out a Steam2 ID structure
+// Input:	pTSteamGlobalUserID -	Steam2 ID to write to
+//-----------------------------------------------------------------------------
+inline TSteamGlobalUserID SteamIDToSteam2UserID( CSteamID steamID )
+{
+	TSteamGlobalUserID steamGlobalUserID;
+
+	steamGlobalUserID.m_SteamInstanceID = 0;
+	steamGlobalUserID.m_SteamLocalUserID.Split.High32bits = steamID.GetAccountID() % 2;
+	steamGlobalUserID.m_SteamLocalUserID.Split.Low32bits = steamID.GetAccountID() / 2;
+
+	return steamGlobalUserID;
+}
+
+
+#endif
+
 // generic invalid CSteamID
 #define k_steamIDNil CSteamID()
 
@@ -901,6 +910,14 @@ class CGameID
 {
 public:
 
+	enum EGameIDType
+	{
+		k_EGameIDTypeApp		= 0,
+		k_EGameIDTypeGameMod	= 1,
+		k_EGameIDTypeShortcut	= 2,
+		k_EGameIDTypeP2P		= 3,
+	};
+
 	CGameID()
 	{
 		m_gameID.m_nType = k_EGameIDTypeApp;
@@ -931,12 +948,12 @@ public:
 		m_gameID.m_nAppID = nAppID;
 	}
 
-	CGameID( uint32 nAppID, uint32 nModID )
+	// Not validating anything .. use IsValid()
+	explicit CGameID( uint32 nAppID, uint32 nModID, CGameID::EGameIDType nType )
 	{
-		m_ulGameID = 0;
 		m_gameID.m_nAppID = nAppID;
 		m_gameID.m_nModID = nModID;
-		m_gameID.m_nType = k_EGameIDTypeGameMod;
+		m_gameID.m_nType = nType;
 	}
 
 	CGameID( const CGameID &that )
@@ -995,10 +1012,14 @@ public:
 		return m_gameID.m_nModID;
 	}
 
-	uint32 AppID() const
+#if !defined(VALVE_SHORTCUT_DEBUG)
+	uint32 AppID( bool = false ) const
 	{
 		return m_gameID.m_nAppID;
 	}
+#else
+	uint32 AppID( bool bShortcutOK = false ) const;
+#endif
 
 	bool operator == ( const CGameID &rhs ) const
 	{
@@ -1024,13 +1045,15 @@ public:
 			return m_gameID.m_nAppID != k_uAppIdInvalid;
 
 		case k_EGameIDTypeGameMod:
-			return m_gameID.m_nAppID != k_uAppIdInvalid && m_gameID.m_nModID & 0x80000000;
+			return m_gameID.m_nAppID != k_uAppIdInvalid && (m_gameID.m_nModID & 0x80000000);
 
 		case k_EGameIDTypeShortcut:
-			return (m_gameID.m_nModID & 0x80000000) != 0;
+			return m_gameID.m_nAppID == k_uAppIdInvalid
+				&& (m_gameID.m_nModID & 0x80000000)
+				&& m_gameID.m_nModID >= (5000 | 0x80000000); // k_unMaxExpectedLocalAppId - shortcuts are pushed beyond that range
 
 		case k_EGameIDTypeP2P:
-			return m_gameID.m_nAppID == k_uAppIdInvalid && m_gameID.m_nModID & 0x80000000;
+			return m_gameID.m_nAppID == k_uAppIdInvalid && (m_gameID.m_nModID & 0x80000000);
 
 		default:
 			return false;
@@ -1046,14 +1069,6 @@ public:
 //
 // Internal stuff.  Use the accessors above if possible
 //
-
-	enum EGameIDType
-	{
-		k_EGameIDTypeApp		= 0,
-		k_EGameIDTypeGameMod	= 1,
-		k_EGameIDTypeShortcut	= 2,
-		k_EGameIDTypeP2P		= 3,
-	};
 
 	struct GameID_t
 	{
@@ -1073,6 +1088,8 @@ public:
 		uint64 m_ulGameID;
 		GameID_t m_gameID;
 	};
+
+	friend CGameID GameIDFromAppAndModPath( uint32 nAppID, const char *pchModPath );
 };
 
 #pragma pack( pop )
@@ -1128,7 +1145,7 @@ enum ESteamIPv6ConnectivityState
 // Define compile time assert macros to let us validate the structure sizes.
 #define VALVE_COMPILE_TIME_ASSERT( pred ) typedef char compile_time_assert_type[(pred) ? 1 : -1];
 
-#if defined(__linux__) || defined(__APPLE__) 
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 // The 32-bit version of gcc has the alignment requirement for uint64 and double set to
 // 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
 // The 64-bit version of gcc has the alignment requirement for these types set to

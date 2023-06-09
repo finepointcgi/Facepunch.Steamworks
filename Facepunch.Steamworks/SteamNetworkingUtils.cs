@@ -14,10 +14,14 @@ namespace Steamworks
 	{
 		internal static ISteamNetworkingUtils Internal => Interface as ISteamNetworkingUtils;
 
-		internal override void InitializeInterface( bool server )
+		internal override bool InitializeInterface( bool server )
 		{
 			SetInterface( server, new ISteamNetworkingUtils( server ) );
+			if ( Interface.Self == IntPtr.Zero ) return false;
+
 			InstallCallbacks( server );
+
+			return true;
 		}
 
 		static void InstallCallbacks( bool server )
@@ -192,6 +196,43 @@ namespace Steamworks
 		}
 
 		/// <summary>
+		/// Minimum send rate clamp, 0 is no limit.
+		/// This value will control the min allowed sending rate that 
+		/// bandwidth estimation is allowed to reach.  Default is 0 (no-limit)
+		/// </summary>
+		public static int SendRateMin
+		{
+			get => GetConfigInt( NetConfig.SendRateMin );
+			set => SetConfigInt( NetConfig.SendRateMin, value );
+		}
+
+		/// <summary>
+		/// Maximum send rate clamp, 0 is no limit.
+		/// This value will control the max allowed sending rate that 
+		/// bandwidth estimation is allowed to reach.  Default is 0 (no-limit)
+		/// </summary>
+		public static int SendRateMax
+		{
+			get => GetConfigInt( NetConfig.SendRateMax );
+			set => SetConfigInt( NetConfig.SendRateMax, value );
+		}
+
+		/// <summary>
+		/// Nagle time, in microseconds.  When SendMessage is called, if
+		/// the outgoing message is less than the size of the MTU, it will be
+		/// queued for a delay equal to the Nagle timer value.  This is to ensure
+		/// that if the application sends several small messages rapidly, they are
+		/// coalesced into a single packet.
+		/// See historical RFC 896.  Value is in microseconds. 
+		/// Default is 5000us (5ms).
+		/// </summary>
+		public static int NagleTime
+		{
+			get => GetConfigInt( NetConfig.NagleTime );
+			set => SetConfigInt( NetConfig.NagleTime, value );
+		}
+
+		/// <summary>
 		/// Don't automatically fail IP connections that don't have
 		/// strong auth.  On clients, this means we will attempt the connection even if
 		/// we don't know our identity or can't get a cert.  On the server, it means that
@@ -224,6 +265,60 @@ namespace Steamworks
 		{
 			get => GetConfigInt( NetConfig.Unencrypted );
 			set => SetConfigInt( NetConfig.Unencrypted, value );
+		}
+
+		/// <summary>
+		/// Log RTT calculations for inline pings and replies.
+		/// </summary>
+		public static int DebugLevelAckRTT
+		{
+			get => GetConfigInt( NetConfig.LogLevel_AckRTT );
+			set => SetConfigInt( NetConfig.LogLevel_AckRTT, value );
+		}
+
+		/// <summary>
+		/// Log SNP packets send.
+		/// </summary>
+		public static int DebugLevelPacketDecode
+		{
+			get => GetConfigInt( NetConfig.LogLevel_PacketDecode );
+			set => SetConfigInt( NetConfig.LogLevel_PacketDecode, value );
+		}
+
+		/// <summary>
+		/// Log each message send/recv.
+		/// </summary>
+		public static int DebugLevelMessage
+		{
+			get => GetConfigInt( NetConfig.LogLevel_Message );
+			set => SetConfigInt( NetConfig.LogLevel_Message, value );
+		}
+
+		/// <summary>
+		/// Log dropped packets.
+		/// </summary>
+		public static int DebugLevelPacketGaps
+		{
+			get => GetConfigInt( NetConfig.LogLevel_PacketGaps );
+			set => SetConfigInt( NetConfig.LogLevel_PacketGaps, value );
+		}
+
+		/// <summary>
+		/// Log P2P rendezvous messages.
+		/// </summary>
+		public static int DebugLevelP2PRendezvous
+		{
+			get => GetConfigInt( NetConfig.LogLevel_P2PRendezvous );
+			set => SetConfigInt( NetConfig.LogLevel_P2PRendezvous, value );
+		}
+
+		/// <summary>
+		/// Log ping relays.
+		/// </summary>
+		public static int DebugLevelSDRRelayPings
+		{
+			get => GetConfigInt( NetConfig.LogLevel_SDRRelayPings );
+			set => SetConfigInt( NetConfig.LogLevel_SDRRelayPings, value );
 		}
 
 		/// <summary>
